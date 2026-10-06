@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -18,7 +18,7 @@ from room_service.database import Base
 
 
 def utc_now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ==========================================
@@ -31,10 +31,14 @@ class User(Base):
     auth0_user_id = Column(String(128), unique=True, nullable=False, index=True)
     email = Column(String(150), unique=True, nullable=False, index=True)
     name = Column(String(150), nullable=False)
-    role = Column(String(30), nullable=False, default="EMPLOYEE")  # EMPLOYEE, ROOM_MANAGER, ADMIN
+    role = Column(
+        String(30), nullable=False, default="EMPLOYEE"
+    )  # EMPLOYEE, ROOM_MANAGER, ADMIN
     status = Column(String(20), nullable=False, default="ACTIVE")  # ACTIVE, INACTIVE
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     # Relationships
     bookings = relationship("Booking", back_populates="organizer")
@@ -53,17 +57,23 @@ class Room(Base):
     name = Column(String(100), nullable=False)
     location = Column(String(100), nullable=False)
     capacity = Column(Integer, nullable=False)
-    status = Column(String(20), nullable=False, default="AVAILABLE")  # AVAILABLE, MAINTENANCE, DISABLED
+    status = Column(
+        String(20), nullable=False, default="AVAILABLE"
+    )  # AVAILABLE, MAINTENANCE, DISABLED
     image_url = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
 
     # Soft delete: NULL nghĩa là đang hoạt động
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     # Relationships
-    equipments = relationship("RoomEquipment", back_populates="room", cascade="all, delete-orphan")
+    equipments = relationship(
+        "RoomEquipment", back_populates="room", cascade="all, delete-orphan"
+    )
     bookings = relationship("Booking", back_populates="room")
 
 
@@ -71,7 +81,9 @@ class Equipment(Base):
     __tablename__ = "equipments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    code = Column(String(50), unique=True, nullable=False, index=True)  # TV, PROJECTOR, CAMERA, MIC, WHITEBOARD
+    code = Column(
+        String(50), unique=True, nullable=False, index=True
+    )  # TV, PROJECTOR, CAMERA, MIC, WHITEBOARD
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
@@ -83,8 +95,14 @@ class RoomEquipment(Base):
     __tablename__ = "room_equipments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False)
-    equipment_id = Column(UUID(as_uuid=True), ForeignKey("equipments.id", ondelete="CASCADE"), nullable=False)
+    room_id = Column(
+        UUID(as_uuid=True), ForeignKey("rooms.id", ondelete="CASCADE"), nullable=False
+    )
+    equipment_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("equipments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     quantity = Column(Integer, default=1, nullable=False)
 
     room = relationship("Room", back_populates="equipments")
@@ -102,25 +120,43 @@ class Booking(Base):
     __tablename__ = "bookings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id", ondelete="RESTRICT"), nullable=False, index=True)
-    organizer_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    room_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("rooms.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    organizer_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     start_time = Column(DateTime(timezone=True), nullable=False, index=True)
     end_time = Column(DateTime(timezone=True), nullable=False, index=True)
-    meeting_type = Column(String(20), nullable=False, default="OFFLINE")  # OFFLINE, ONLINE, HYBRID
+    meeting_type = Column(
+        String(20), nullable=False, default="OFFLINE"
+    )  # OFFLINE, ONLINE, HYBRID
     meeting_link = Column(String(500), nullable=True)
-    status = Column(String(30), nullable=False, default="CONFIRMED", index=True)  # CONFIRMED, CHECKED_IN, CANCELLED, AUTO_CANCELLED, COMPLETED
+    status = Column(
+        String(30), nullable=False, default="CONFIRMED", index=True
+    )  # CONFIRMED, CHECKED_IN, CANCELLED, AUTO_CANCELLED, COMPLETED
     checked_in_at = Column(DateTime(timezone=True), nullable=True)
     cancellation_reason = Column(String(255), nullable=True)
     version = Column(Integer, default=1, nullable=False)  # Optimistic Locking
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     # Relationships
     room = relationship("Room", back_populates="bookings")
     organizer = relationship("User", back_populates="bookings")
-    attendees = relationship("BookingAttendee", back_populates="booking", cascade="all, delete-orphan")
+    attendees = relationship(
+        "BookingAttendee", back_populates="booking", cascade="all, delete-orphan"
+    )
     notifications = relationship("Notification", back_populates="booking")
 
 
@@ -128,9 +164,21 @@ class BookingAttendee(Base):
     __tablename__ = "booking_attendees"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    booking_id = Column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    status = Column(String(20), nullable=False, default="INVITED")  # INVITED, ACCEPTED, DECLINED
+    booking_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("bookings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status = Column(
+        String(20), nullable=False, default="INVITED"
+    )  # INVITED, ACCEPTED, DECLINED
     responded_at = Column(DateTime(timezone=True), nullable=True)
 
     booking = relationship("Booking", back_populates="attendees")
@@ -149,7 +197,9 @@ class BookingPolicy(Base):
     max_advance_days = Column(Integer, default=30, nullable=False)
     checkin_grace_period_minutes = Column(Integer, default=15, nullable=False)
     require_checkin = Column(Boolean, default=True, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 # ==========================================
@@ -159,9 +209,21 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    booking_id = Column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="SET NULL"), nullable=True, index=True)
-    type = Column(String(50), nullable=False)  # BOOKING_CREATED, CANCELLED, AUTO_CANCELLED, REMINDER
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    booking_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("bookings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    type = Column(
+        String(50), nullable=False
+    )  # BOOKING_CREATED, CANCELLED, AUTO_CANCELLED, REMINDER
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, nullable=False, index=True)
@@ -174,6 +236,7 @@ class Notification(Base):
 
 class ProcessedEvent(Base):
     """Bảo đảm Idempotency khi nhận message từ RabbitMQ"""
+
     __tablename__ = "processed_events"
 
     event_id = Column(String(100), primary_key=True)  # RabbitMQ Message ID
@@ -189,16 +252,27 @@ class AuditLog(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     correlation_id = Column(String(100), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     user_email = Column(String(150), nullable=True)  # Snapshot email lúc thực hiện
-    user_role = Column(String(30), nullable=True)   # Snapshot role lúc thực hiện
-    action = Column(String(50), nullable=False, index=True)  # CREATE_BOOKING, CANCEL_BOOKING, UPDATE_ROOM...
-    entity_name = Column(String(50), nullable=False, index=True)  # ROOM, BOOKING, USER, POLICY
+    user_role = Column(String(30), nullable=True)  # Snapshot role lúc thực hiện
+    action = Column(
+        String(50), nullable=False, index=True
+    )  # CREATE_BOOKING, CANCEL_BOOKING, UPDATE_ROOM...
+    entity_name = Column(
+        String(50), nullable=False, index=True
+    )  # ROOM, BOOKING, USER, POLICY
     entity_id = Column(String(100), nullable=True)
     result = Column(String(20), nullable=False)  # SUCCESS, FAILED, FORBIDDEN
     details = Column(JSONB, nullable=True)
     ip_address = Column(String(50), nullable=True)
     user_agent = Column(String(255), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at = Column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
-    user = relationship("User", back_populates="audit_logs")
+    user = relationship("User", back_populates="audit_logs")
