@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 
 # Fix Windows console UTF-8 printing
 if hasattr(sys.stdout, "reconfigure"):
@@ -42,11 +42,7 @@ def seed_users(db):
     created_count = 0
 
     for data in users_data:
-        user = (
-            db.query(User)
-            .filter(User.email == data["email"])
-            .first()
-        )
+        user = db.query(User).filter(User.email == data["email"]).first()
 
         if user is None:
             user = User(**data)
@@ -90,11 +86,7 @@ def seed_equipments(db):
     equipment_map = {}
 
     for item in equipments_data:
-        equipment = (
-            db.query(Equipment)
-            .filter(Equipment.code == item["code"])
-            .first()
-        )
+        equipment = db.query(Equipment).filter(Equipment.code == item["code"]).first()
 
         if equipment is None:
             equipment = Equipment(
@@ -178,11 +170,7 @@ def seed_rooms(db, equipment_map):
     created_room_equipment = 0
 
     for room_data in rooms_data:
-        room = (
-            db.query(Room)
-            .filter(Room.name == room_data["name"])
-            .first()
-        )
+        room = db.query(Room).filter(Room.name == room_data["name"]).first()
 
         if room is None:
             room = Room(
@@ -219,10 +207,7 @@ def seed_rooms(db, equipment_map):
                 created_room_equipment += 1
 
     print(f"[INFO] Rooms: tao moi {created_rooms} phong.")
-    print(
-        "[INFO] Room equipments: "
-        f"tao moi {created_room_equipment} quan he."
-    )
+    print(f"[INFO] Room equipments: tao moi {created_room_equipment} quan he.")
 
 
 def seed_booking_policy(db):

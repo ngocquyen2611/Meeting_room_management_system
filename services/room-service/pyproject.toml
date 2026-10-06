@@ -14,13 +14,14 @@ dependencies = [
     "httpx>=0.28.1",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
-    "python-jose>=3.5.0",
+    "pydantic[email]>=2.13.5",
+    "python-jose[cryptography]>=3.5.0",
     "sqlalchemy>=2.1.1",
     "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
-room-service = "room_service:main"
+room-service = "room_service._cli:run"
 
 [build-system]
 requires = ["uv_build>=0.12.0,<0.13.0"]
@@ -30,4 +31,8 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.9",
 ]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "room_service.api.deps.require_role"]
